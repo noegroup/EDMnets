@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 
@@ -36,6 +37,7 @@ class Expmh(tf.keras.layers.Layer):
         expA = eigenvectors @ exp_ev_D @ eigenvectors_T
         return expA, eigenvalues, exp_ev
 
+
 class Softplusmh(tf.keras.layers.Layer):
     """
     Matrix softplus function for symmetric input matrices. The resulting matrix is symmetric positive definite.
@@ -48,6 +50,35 @@ class Softplusmh(tf.keras.layers.Layer):
         eigenvectors_T = tf.linalg.matrix_transpose(eigenvectors)
         spA = eigenvectors @ sp_ev_D @ eigenvectors_T
         return spA, eigenvalues, sp_ev
+
+
+class CutEVmh(tf.keras.layers.Layer):
+    """
+    Applies softplus to the largest ndim eigenvalues and sets the rest to zero, making the matrix positive semi-definite
+    with rank `ndim`.
+    """
+
+    def __init__(self, ndim, **kw):
+        super(CutEVmh, self).__init__(**kw)
+        self.ndim = ndim
+
+    def build(self, input_shape):
+        self.n_particles = input_shape[1]
+        self.mask = np.ones((self.n_particles,))
+        for i in range(0, self.n_particles - self.ndim):
+            self.mask[i] = 0.
+        # print(self.mask)
+        self.mask = tf.constant(self.mask, self.dtype)
+
+    def call(self, inputs, training=None):
+        eigenvalues, eigenvectors = tf.linalg.eigh(inputs)
+        sp_ev = tf.math.softplus(eigenvalues)
+        sp_ev = sp_ev * self.mask[None, ...]
+        sp_ev_D = tf.linalg.diag(sp_ev)
+        eigenvectors_T = tf.transpose(eigenvectors, perm=[0, 2, 1])
+        spA = eigenvectors @ sp_ev_D @ eigenvectors_T
+        return spA, eigenvalues, sp_ev
+
 
 class D2M(tf.keras.layers.Layer):
     """
@@ -64,6 +95,15 @@ class D2M(tf.keras.layers.Layer):
         return M
 
 
+class L2M(tf.keras.layers.Layer):
+    """
+    Converts an L matrix (shape n-1 x n-1) to an M matrix (shape n x n) by padding the first column and row with zeros.
+    """
+
+    def call(self, inputs, **kw):
+        return tf.pad(inputs, [[0, 0], [1, 0], [1, 0]])
+
+
 class M2D(tf.keras.layers.Layer):
     """
     Converts a Gram matrix `M` to an EDM `D`.
@@ -73,6 +113,7 @@ class M2D(tf.keras.layers.Layer):
         M = inputs
         M_diag = tf.linalg.diag_part(M)
         return tf.expand_dims(M_diag, 1) + tf.expand_dims(M_diag, 2) - 2. * M
+
 
 class D2T(tf.keras.layers.Layer):
     """
