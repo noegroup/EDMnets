@@ -54,7 +54,8 @@ class EDMLayer(tf.keras.layers.Layer):
         output = tf.reshape(output, (-1, 70, 70))
         # symmetrize
         L = .5 * (output + tf.linalg.matrix_transpose(output))
-        # make spd (this could also be done with expmh or cutting eigenvalues, see layers.Expmh, layers.CutEVmh).
+        # make spd (this could also be done with expmh or cutting eigenvalues, 
+        # see layers.Expmh, layers.CutEVmh).
         L, _, ev_L = self.spmh(L)
         # convert to Gram matrix
         M = self.l2m(L)
