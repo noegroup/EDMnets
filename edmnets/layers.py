@@ -1,6 +1,27 @@
 import tensorflow as tf
 
 
+@tf.function
+def to_difference_matrix(X):
+    """
+    Converts a batch of coordinates to a batch of difference tensors
+    :param X: batch of coordinates [B, N, d]
+    :return: batch of difference tensors [B, N, N, d]
+    """
+    return tf.expand_dims(X, axis=2) - tf.expand_dims(X, axis=1)
+
+
+@tf.function
+def to_distmat(x):
+    """
+    Converts a batch of coordinates to a batch of EDMs
+    :param x: batch of coordinates [B, N, d]
+    :return: batch of EDMs [B, N, N]
+    """
+    diffmat = to_difference_matrix(x)
+    return tf.reduce_sum(tf.square(diffmat), axis=-1, keepdims=False)
+
+
 class Expmh(tf.keras.layers.Layer):
     """
     Matrix exponential function layer on symmetric matrix input, i.e., Expmh(H) = V Expmh(L) V^T.
@@ -11,7 +32,7 @@ class Expmh(tf.keras.layers.Layer):
         eigenvalues, eigenvectors = tf.linalg.eigh(inputs)
         exp_ev = tf.math.exp(eigenvalues)
         exp_ev_D = tf.linalg.diag(exp_ev)
-        eigenvectors_T = tf.transpose(eigenvectors, perm=[0, 2, 1])
+        eigenvectors_T = tf.linalg.matrix_transpose(eigenvectors)
         expA = eigenvectors @ exp_ev_D @ eigenvectors_T
         return expA, eigenvalues, exp_ev
 
@@ -24,7 +45,7 @@ class Softplusmh(tf.keras.layers.Layer):
         eigenvalues, eigenvectors = tf.linalg.eigh(inputs)
         sp_ev = tf.math.softplus(eigenvalues)
         sp_ev_D = tf.linalg.diag(sp_ev)
-        eigenvectors_T = tf.transpose(eigenvectors, perm=[0, 2, 1])
+        eigenvectors_T = tf.linalg.matrix_transpose(eigenvectors)
         spA = eigenvectors @ sp_ev_D @ eigenvectors_T
         return spA, eigenvalues, sp_ev
 

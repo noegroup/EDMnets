@@ -3,6 +3,8 @@ The code for "Generating valid Euclidean distance matrices" [[arXiv](https://arx
 
 Requirements: Tensorflow 2.0.
 
+For usage please refer to tests.
+
 Installation via
 
 ```

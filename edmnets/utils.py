@@ -61,6 +61,7 @@ def to_M_matrix(D):
     Di1 = D1j.T
     return .5 * (-D + D1j + Di1)
 
+
 def to_D_matrix(M):
     """
     Converts a Gram matrix M corresponding to a point cloud to an EDM D.
@@ -69,6 +70,7 @@ def to_D_matrix(M):
     """
     Mii = np.diag(M)
     return np.expand_dims(Mii, 0) + np.expand_dims(Mii, 1) - 2. * M
+
 
 def to_coordinates(distance_matrices: np.ndarray, squared: bool = True, ndim: int = 3):
     """
