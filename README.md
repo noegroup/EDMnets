@@ -3,7 +3,8 @@ The code for "Generating valid Euclidean distance matrices" [[arXiv](https://arx
 If you use this code in a publication, please cite:
 
 ```text
-Moritz Hoffmann, Frank Noé. Generating valid Euclidean distance matrices. arXiv:1910.03131 (2019
+Moritz Hoffmann, Frank Noé: Generating valid Euclidean distance matrices
+arXiv:1910.03131 (2019)
 ```
 
 Requirements: Tensorflow 2.0.
