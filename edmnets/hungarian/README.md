@@ -1,1 +1,1 @@
-C++ implementation of Knuth's Hungarian algorithm, slightly adapted from Dominic Battre's implementation of the Hungarian algorithm by hbc@mit.edu
+C++ implementation of Knuth's Hungarian algorithm, slightly adapted from Dominic Battre's implementation of the Hungarian algorithm by hbc[at]mit.edu together with python bindings and application to distance matrices and type vectors.
