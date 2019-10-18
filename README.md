@@ -15,7 +15,7 @@ year = {2019}
 }
 ```
 
-Requirements: Tensorflow 2.0.
+Requirements: Numpy, Tensorflow 2.0.
 
 Installation via
 
