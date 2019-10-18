@@ -23,7 +23,50 @@ Installation via
 python setup.py install
 ```
 
-Example usage (also under examples directory):
+#### Example usage of Hungarian reordering (also under examples directory):
+```python
+import numpy as np
+import tensorflow as tf
+import edmnets.utils as utils
+import edmnets.layers as layers
+
+# generate some data
+X = np.random.normal(size=(10, 100, 5))
+# associate random point types to data
+types = np.random.randint(0, 10, size=(10, 100), dtype=np.int32)
+# index array for shuffling
+ix = np.arange(100)
+Xshuffled = []
+types_shuffled = []
+# for each element in the batch
+for i in range(len(X)):
+    # shuffle the index array
+    np.random.shuffle(ix)
+    # append shuffled positional data and point types
+    Xshuffled.append(X[i][ix])
+    types_shuffled.append(types[i][ix])
+Xshuffled = np.stack(Xshuffled)
+types_shuffled = np.stack(types_shuffled)
+
+# convert point to EDMs and convert to Tensorflow constants
+D1 = tf.constant(utils.to_distance_matrices(X), dtype=tf.float32)
+D2 = tf.constant(utils.to_distance_matrices(Xshuffled), dtype=tf.float32)
+
+# convert types to tensorflow constants
+t1 = tf.constant(types, dtype=tf.int32)
+t2 = tf.constant(types_shuffled, dtype=tf.int32)
+
+# apply reordering on D1 and t1 based on D2 and t2
+D1_reordered, t1_reordered = layers.HungarianReorder()([D1, D2, t1, t2])
+# check that we found the correct permutation
+np.testing.assert_array_almost_equal(D1_reordered, D2)
+np.testing.assert_array_almost_equal(t1_reordered, t2)
+```
+
+The output of the `HungarianReorder`-layer is equipped with a `stop_gradient`, i.e., the gradient cannot 
+backpropagate through that particular part of the graph. 
+
+#### Example usage of EDM parameterization (also under examples directory):
 
 ```python
 import matplotlib.pyplot as plt

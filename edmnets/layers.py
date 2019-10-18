@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import edmnets.utils as utils
 
 
 @tf.function
@@ -21,6 +22,46 @@ def to_distmat(x):
     """
     diffmat = to_difference_matrix(x)
     return tf.reduce_sum(tf.square(diffmat), axis=-1, keepdims=False)
+
+
+class HungarianReorder(tf.keras.layers.Layer):
+    """
+    Hungarian method on distance matrices. Takes as input two batches of distance matrices D1 and D2
+    as well as (optionally) corresponding point types. The distance matrices and respective point types of D1
+    are permuted to match D2 as closely as possible. A stop gradient is applied to the output of the reordering.
+    """
+
+    @tf.function
+    def hungarian_cost(self, D1, D2):
+        return tf.abs(tf.reduce_mean(D1, axis=1)[..., None] - tf.reduce_mean(D2, axis=1)[:, None, :])
+
+    @staticmethod
+    def _reorder_proxy(cost, D1, D2, types1, types2):
+        return utils.reorder_distance_matrices(D1.numpy(), D2.numpy(), cost.numpy(), types1.numpy(), types2.numpy())
+
+    @tf.function
+    def call(self, inputs):
+        D1, D2 = inputs[0], inputs[1]
+        batch_size = tf.shape(D1)[0]
+        n_atoms = D1.shape[1]
+        if len(inputs) > 2:
+            types1, types2 = inputs[2], inputs[3]
+        else:
+            types1 = tf.zeros((batch_size, n_atoms), dtype=tf.int32)
+            types2 = tf.zeros((batch_size, n_atoms), dtype=tf.int32)
+
+        cost = self.hungarian_cost(D1, D2)
+        out = tf.py_function(HungarianReorder._reorder_proxy, [cost, D1, D2, types1, types2], [D1.dtype, types1.dtype])
+        D1_reordered, types1_reordered = out
+
+        D1_reordered = tf.stop_gradient(D1_reordered)
+        D1_reordered = tf.cast(D1_reordered, D1.dtype)
+        D1_reordered.set_shape([None, n_atoms, n_atoms])
+
+        types1_reordered = tf.stop_gradient(types1_reordered)
+        types1_reordered = tf.cast(types1_reordered, types1.dtype)
+        types1_reordered.set_shape([None, n_atoms])
+        return D1_reordered, types1_reordered
 
 
 class Expmh(tf.keras.layers.Layer):
