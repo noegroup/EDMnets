@@ -20,6 +20,9 @@ Requirements: Tensorflow 2.0.
 Installation via
 
 ```
+git clone https://github.com/noegroup/EDMnets
+cd EDMnets
+git submodule update --init
 python setup.py install
 ```
 
