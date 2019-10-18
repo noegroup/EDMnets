@@ -1,6 +1,6 @@
 #include "hungarian.h"
 
-PYBIND11_MODULE(bindings, m) {
+PYBIND11_MODULE(_binding, m) {
     m.def("hungarian_reorder", [](np_array<float> cost, np_array<float> edms,
                                   const np_array<std::int32_t> &types, const np_array<std::int32_t> &typesRec) {
         if(cost.shape(1) != cost.shape(2)) throw std::invalid_argument("requires square matrix for costs");

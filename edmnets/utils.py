@@ -1,4 +1,30 @@
 import numpy as np
+import edmnets.hungarian._binding as _bd
+
+
+def reorder_distance_matrices(D1, D2, cost=None, types1=None, types2=None):
+    """
+    Reorders a batch of distance matrices to match another batch as distance matrices as closely
+    as possible (element-wise). To this end, a cost matrix can either be constructed or passed into the function.
+    If constructed, it is computed as absolute difference in mean distance from each single atom to all others in its
+    point cloud. Furthermore, types can be passed which are used to restrict the matching to only certain permutation
+    groups (the ones with matching types).
+
+    :param D1: first distance matrix, shape [B, N, N]
+    :param D2: second distance matrix, shape [B, N, N]
+    :param cost: cost matrix, optional
+    :param types1: sparse types corresponding to first distance matrix, shape [B, N]
+    :param types2: sparse types corresponding to second distance matrix, shape [B, N]
+    :return: a reordered version of D1 and types1 to match D2 and types2 as closely as possible
+    """
+    if types1 is None:
+        types1 = np.zeros((D1.shape[0], D1.shape[1]), dtype=np.int32)
+    if types2 is None:
+        types2 = np.zeros((D1.shape[0], D1.shape[1]), dtype=np.int32)
+    if cost is None:
+        cost = np.abs(np.mean(D1, axis=1)[..., None] - np.mean(D2, axis=1)[:, None, :])
+    out = _bd.hungarian_reorder(np.copy(cost), np.copy(D1), np.copy(types1), types2)
+    return out[0].astype(D2.dtype), out[1]
 
 
 def to_T_matrix(D):
